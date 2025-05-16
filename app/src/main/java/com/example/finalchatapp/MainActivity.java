@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.os.Bundle;
 
 import com.example.finalchatapp.fragments.LoginFragment;
+import com.example.finalchatapp.services.NotificationService;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
@@ -32,6 +33,10 @@ public class MainActivity extends AppCompatActivity {
         if (currentUser != null) {
             // User is already signed in, go to Home Activity
             startActivity(new Intent(this, HomeActivity.class));
+
+            // Schedule notifications
+            NotificationService.scheduleNotifications(this);
+
             finish();
         } else {
             // User is not signed in, show Login Fragment

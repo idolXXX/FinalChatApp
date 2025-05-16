@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "18286808366",
-    "project_id": "thefinalchatapp",
-    "storage_bucket": "thefinalchatapp.firebasestorage.app"
+    "project_number": "825917226444",
+    "project_id": "finalchatapp-5e29e",
+    "storage_bucket": "finalchatapp-5e29e.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:18286808366:android:06574a5deb19f1c1313ebf",
+        "mobilesdk_app_id": "1:825917226444:android:930f44b9532777c9d77169",
         "android_client_info": {
-          "package_name": "com.example.thefinalchatapp"
+          "package_name": "com.example.finalchatapp"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyD2VCk8DVFpz0r8uL_P5SclRZ_MRwmzWQI"
+          "current_key": "AIzaSyAaGDJoZ5ff48I2rgNw0i4WqEr29_4lc9s"
         }
       ],
       "services": {

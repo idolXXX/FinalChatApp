@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.example.finalchatapp"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.finalchatapp"
@@ -45,10 +45,15 @@ dependencies {
     implementation(libs.constraintlayout)
 
     // Add Firebase dependencies
-    implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
+    implementation(platform("com.google.firebase:firebase-bom:32.7.4"))
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-storage")
+
+    implementation("com.google.android.gms:play-services-auth:20.7.0")
+    implementation("com.google.android.gms:play-services-safetynet:18.0.1")
+
+    implementation("com.google.android.play:integrity:1.3.0")
 
     // Add UI components
     implementation("de.hdodenhof:circleimageview:3.1.0")
