@@ -1,46 +1,41 @@
 package com.example.finalchatapp;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
-import android.app.ProgressDialog;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.Toast;
 
 import com.example.finalchatapp.fragments.ChatsFragment;
 import com.example.finalchatapp.fragments.SettingsFragment;
 import com.example.finalchatapp.fragments.UsersFragment;
-import com.example.finalchatapp.models.Message;
-import com.example.finalchatapp.models.User;
+import com.example.finalchatapp.services.MessageListener;
 import com.example.finalchatapp.services.NotificationService;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.FirebaseFirestore;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-
 
 public class HomeActivity extends AppCompatActivity {
+
+    private static final String TAG = "HomeActivity";
+    private static final int NOTIFICATION_PERMISSION_REQUEST = 100;
 
     private BottomNavigationView bottomNavigationView;
     private Toolbar toolbar;
     private FirebaseAuth mAuth;
-    Button testButton;
-    FirebaseUser currentUser;
-    FirebaseFirestore db;
-    ProgressDialog progressDialog;
-    User     currentUserObj;
-    Map<String, Object> chatData;
-    Message message;
+    private Button forceButton;
+    private Button testNotificationButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -94,32 +89,109 @@ public class HomeActivity extends AppCompatActivity {
                 .commit();
         toolbar.setTitle("Chats");
 
-        // Add test chat button
-//        addTestUserButton();
+        // Create notification channel
+        NotificationService.createNotificationChannel(this);
 
-        // Schedule notifications
+        // Request notification permissions
+        requestNotificationPermission();
+
+        // Set up the buttons
+        setupButtons();
+
+        // Schedule periodic notification checks
         NotificationService.scheduleNotifications(this);
+
+        // Start real-time message listener
+        MessageListener.startMessageListeners(this);
+
+        Log.d(TAG, "HomeActivity created, notification services initialized");
     }
 
+    private void setupButtons() {
+        // Force Button - Directly shows a chat notification
+        forceButton = findViewById(R.id.force_button);
+        forceButton.setOnClickListener(v -> {
+            FirebaseUser currentUser = mAuth.getCurrentUser();
+            if (currentUser == null) return;
 
+            String otherUserId = "3VHEXkMqKMgafJo8QAZs994nZ4v2"; // Replace with actual user ID
+            String senderName = "Test User";
+            String messageContent = "This is a direct test message from the Force button!";
 
+            // Show notification directly
+            NotificationService.showDirectNotification(
+                    this,
+                    senderName,
+                    messageContent,
+                    otherUserId
+            );
 
-//    private void handleError(Exception e, ProgressDialog progressDialog) {
-//        Log.e("InitDB", "Error initializing database", e);
-//        progressDialog.dismiss();
-//        Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-//    }
-//    private void addTestUserButton() {
-//        Button testButton = findViewById(R.id.test_chat_button);
-//
-//        // Use the same fixed test user ID
-//        String testUserId = "testuser123";
-//
-//        testButton.setOnClickListener(v -> {
-//            // Start chat activity with this user
-//            Intent intent = new Intent(HomeActivity.this, ChatActivity.class);
-//            intent.putExtra("userId", testUserId);
-//            startActivity(intent);
-//        });
-//    }
+            Log.d(TAG, "Force notification button pressed");
+            Toast.makeText(this, "Force notification sent", Toast.LENGTH_SHORT).show();
+        });
+
+        // Test Standard Notification Button
+        testNotificationButton = findViewById(R.id.test_notification_button);
+        testNotificationButton.setOnClickListener(v -> {
+            // Show a simple test notification
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(this, NotificationService.CHANNEL_ID)
+                    .setSmallIcon(R.drawable.ic_chat)
+                    .setContentTitle("Test Notification")
+                    .setContentText("This is a standard test notification")
+                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .setAutoCancel(true)
+                    .setDefaults(NotificationCompat.DEFAULT_ALL);
+
+            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+            try {
+                notificationManager.notify(9999, builder.build());
+                Toast.makeText(this, "Standard notification sent", Toast.LENGTH_SHORT).show();
+                Log.d(TAG, "Test notification sent");
+            } catch (SecurityException e) {
+                Log.e(TAG, "Permission denied for showing notification", e);
+                Toast.makeText(this, "Permission denied: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+
+                // Try requesting permission again
+                requestNotificationPermission();
+            }
+        });
+    }
+
+    private void requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            boolean hasPermission = ContextCompat.checkSelfPermission(this,
+                    android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
+
+            Log.d(TAG, "Notification permission status: " + (hasPermission ? "GRANTED" : "DENIED"));
+
+            if (!hasPermission) {
+                requestPermissions(
+                        new String[]{android.Manifest.permission.POST_NOTIFICATIONS},
+                        NOTIFICATION_PERMISSION_REQUEST);
+            }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == NOTIFICATION_PERMISSION_REQUEST) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Log.d(TAG, "Notification permission granted");
+                Toast.makeText(this, "Notification permission granted", Toast.LENGTH_SHORT).show();
+            } else {
+                Log.d(TAG, "Notification permission denied");
+                Toast.makeText(this, "Notifications won't work without permission", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Clean up MessageListener resources when the activity is destroyed
+        // This is important to prevent memory leaks
+        MessageListener.stopAllListeners();
+    }
 }

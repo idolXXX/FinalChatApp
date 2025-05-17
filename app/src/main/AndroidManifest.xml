@@ -5,6 +5,11 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Use SCHEDULE_EXACT_ALARM for SDK < 34 and USE_EXACT_ALARM for SDK >= 34 -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
         android:name=".ChatApplication"
@@ -35,12 +40,27 @@
             </intent-filter>
         </activity>
 
-
-        <!-- Register the BroadcastReceiver -->
-        <receiver android:name=".services.NotificationService"
+        <!-- Register the BroadcastReceiver for notifications -->
+        <receiver
+            android:name=".services.NotificationService"
+            android:enabled="true"
             android:exported="false">
             <intent-filter>
+                <action android:name="com.example.finalchatapp.CHECK_MESSAGES" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Boot Receiver with high priority -->
+        <receiver
+            android:name=".services.BootReceiver"
+            android:enabled="true"
+            android:exported="true"
+            android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
+            <intent-filter android:priority="999">
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.REBOOT" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </receiver>
 

@@ -2,4 +2,7 @@
     <string name="app_name">FinalChatApp</string>
     <string name="start_test_chat">Start Test Chat</string>
     <string name="initialize_database">Initialize Database</string>
+    <string name="no_conversations_yet">No conversations yet</string>
+    <string name="test_notification">test notification</string>
+    <string name="test_specific_user">Test Specific User</string>
 </resources>

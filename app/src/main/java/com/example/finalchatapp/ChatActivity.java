@@ -19,6 +19,7 @@ import android.widget.Toast;
 import com.example.finalchatapp.adapters.MessageAdapter;
 import com.example.finalchatapp.models.Message;
 import com.example.finalchatapp.models.User;
+import com.example.finalchatapp.services.NotificationService;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -32,8 +33,10 @@ import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import de.hdodenhof.circleimageview.CircleImageView;
@@ -57,6 +60,8 @@ public class ChatActivity extends AppCompatActivity {
 
     private List<Message> messageList;
     private MessageAdapter messageAdapter;
+
+    private Set<String> loadedMessageIds = new HashSet<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,6 +103,7 @@ public class ChatActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(messageAdapter);
 
+
         // Load other user info
         loadUserInfo();
 
@@ -112,6 +118,14 @@ public class ChatActivity extends AppCompatActivity {
 
         // Set up back button
         toolbar.setNavigationOnClickListener(v -> finish());
+
+        // Clear the loaded message IDs
+        loadedMessageIds = new HashSet<>();
+
+        // Clear any notifications for this chat
+        if (otherUserId != null) {
+            NotificationService.clearNotification(this, otherUserId);
+        }
     }
 
     private void loadUserInfo() {
@@ -159,16 +173,14 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void setChatId() {
-        // Create a unique chat ID based on user IDs
-        // This ensures that the same chat ID is generated regardless of who initiates the chat
-        String userId1 = currentUser.getUid();
-        String userId2 = otherUserId;
-
-        if (userId1.compareTo(userId2) < 0) {
-            chatId = userId1 + "_" + userId2;
+        // Create a unique chat ID based on both users' IDs
+        if (currentUser.getUid().compareTo(otherUserId) < 0) {
+            chatId = currentUser.getUid() + "_" + otherUserId;
         } else {
-            chatId = userId2 + "_" + userId1;
+            chatId = otherUserId + "_" + currentUser.getUid();
         }
+
+        Log.d("ChatActivity", "Chat ID set to: " + chatId);
     }
 
     private void loadMessages() {
@@ -186,7 +198,12 @@ public class ChatActivity extends AppCompatActivity {
                             for (DocumentChange dc : snapshots.getDocumentChanges()) {
                                 if (dc.getType() == DocumentChange.Type.ADDED) {
                                     Message message = dc.getDocument().toObject(Message.class);
-                                    messageList.add(message);
+
+                                    // Only add the message if we haven't seen its ID before
+                                    if (!loadedMessageIds.contains(message.getMessageId())) {
+                                        loadedMessageIds.add(message.getMessageId());
+                                        messageList.add(message);
+                                    }
                                 }
                             }
                             messageAdapter.notifyDataSetChanged();
@@ -202,16 +219,19 @@ public class ChatActivity extends AppCompatActivity {
             return;
         }
 
-        // Disable send button to prevent double-sending
+        // Disable send button to prevent double-sends
         sendButton.setEnabled(false);
 
         // Create a new message
         String messageId = UUID.randomUUID().toString();
         Message message = new Message(messageId, currentUser.getUid(), otherUserId, content);
 
-        // Add to local list and update UI immediately for better UX
+        // Add to loaded IDs set to prevent duplication when Firestore listener fires
+        loadedMessageIds.add(messageId);
+
+        // Add message to list right away for immediate feedback
         messageList.add(message);
-        messageAdapter.notifyItemInserted(messageList.size() - 1);
+        messageAdapter.notifyDataSetChanged();
         recyclerView.scrollToPosition(messageList.size() - 1);
 
         // Clear input
@@ -221,45 +241,53 @@ public class ChatActivity extends AppCompatActivity {
         db.collection("chats").document(chatId).collection("messages").document(messageId)
                 .set(message)
                 .addOnSuccessListener(aVoid -> {
-                    Log.d("ChatActivity", "Message sent successfully");
                     sendButton.setEnabled(true);
-
                     // Update chat info in both users' chats collection
                     updateChatInfo(message);
                 })
                 .addOnFailureListener(e -> {
-                    Log.e("ChatActivity", "Failed to send message: " + e.getMessage(), e);
                     sendButton.setEnabled(true);
-                    Toast.makeText(ChatActivity.this, "Failed to send message: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    // If saving fails, remove the message from the list
+                    messageList.remove(message);
+                    loadedMessageIds.remove(messageId);
+                    messageAdapter.notifyDataSetChanged();
+                    Toast.makeText(ChatActivity.this, "Failed to send message", Toast.LENGTH_SHORT).show();
                 });
     }
 
     private void updateChatInfo(Message message) {
+        // Create the chat info map
         Map<String, Object> chatInfo = new HashMap<>();
         chatInfo.put("lastMessageContent", message.getContent());
         chatInfo.put("lastMessageTimestamp", message.getTimestamp());
         chatInfo.put("lastMessageSenderId", message.getSenderId());
 
+        // Log for debugging
+        Log.d("ChatActivity", "Updating chat info - Current User: " + currentUser.getUid()
+                + ", Other User: " + otherUserId + ", Message: " + message.getContent());
+
         // Update chat info for current user
         db.collection("users").document(currentUser.getUid())
                 .collection("chats").document(otherUserId)
                 .set(chatInfo)
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Toast.makeText(ChatActivity.this, "Failed to update chat info", Toast.LENGTH_SHORT).show();
-                    }
+                .addOnSuccessListener(aVoid -> {
+                    Log.d("ChatActivity", "Chat info updated for current user");
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("ChatActivity", "Failed to update chat info for current user", e);
+                    Toast.makeText(ChatActivity.this, "Failed to update chat info", Toast.LENGTH_SHORT).show();
                 });
 
         // Update chat info for other user
         db.collection("users").document(otherUserId)
                 .collection("chats").document(currentUser.getUid())
                 .set(chatInfo)
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Toast.makeText(ChatActivity.this, "Failed to update chat info for receiver", Toast.LENGTH_SHORT).show();
-                    }
+                .addOnSuccessListener(aVoid -> {
+                    Log.d("ChatActivity", "Chat info updated for other user");
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("ChatActivity", "Failed to update chat info for other user", e);
+                    Toast.makeText(ChatActivity.this, "Failed to update chat info for receiver", Toast.LENGTH_SHORT).show();
                 });
     }
 }
