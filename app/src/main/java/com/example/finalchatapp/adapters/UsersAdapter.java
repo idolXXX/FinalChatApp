@@ -10,6 +10,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.finalchatapp.ChatActivity;
 import com.example.finalchatapp.R;
 import com.example.finalchatapp.models.User;
@@ -40,10 +41,18 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.ViewHolder> 
         User user = userList.get(position);
 
         holder.usernameText.setText(user.getUsername());
-        holder.statusText.setText(user.getStatus());
+        holder.statusText.setText(user.getStatus() != null ? user.getStatus() : "");
 
-        // Load profile image with Glide if available
-        // For now, we'll use the default profile image
+        // Load profile image with Glide
+        if (user.getProfileImageUrl() != null && !user.getProfileImageUrl().isEmpty()) {
+            Glide.with(context)
+                    .load(user.getProfileImageUrl())
+                    .placeholder(R.drawable.default_profile)
+                    .error(R.drawable.default_profile)
+                    .into(holder.profileImage);
+        } else {
+            holder.profileImage.setImageResource(R.drawable.default_profile);
+        }
 
         // Set click listener to open chat
         holder.itemView.setOnClickListener(v -> {

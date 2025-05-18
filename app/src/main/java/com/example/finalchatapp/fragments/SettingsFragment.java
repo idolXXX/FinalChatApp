@@ -17,6 +17,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import com.bumptech.glide.Glide;
 import com.example.finalchatapp.MainActivity;
 import com.example.finalchatapp.R;
 import com.example.finalchatapp.models.User;
@@ -26,6 +27,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
+import com.bumptech.glide.Glide;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -89,7 +91,13 @@ public class SettingsFragment extends Fragment {
                         statusInput.setText(user.getStatus());
 
                         // Load profile image with Glide if available
-                        // For now, we'll use the default profile image
+                        if (user.getProfileImageUrl() != null && !user.getProfileImageUrl().isEmpty()) {
+                            Glide.with(this)
+                                    .load(user.getProfileImageUrl())
+                                    .placeholder(R.drawable.default_profile)
+                                    .error(R.drawable.default_profile)
+                                    .into(profileImage);
+                        }
                     }
                 });
     }
