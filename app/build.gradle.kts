@@ -55,10 +55,16 @@ dependencies {
 
     implementation("com.google.android.play:integrity:1.3.0")
 
+    // Image loading with Glide
+    implementation ("com.github.bumptech.glide:glide:4.15.1")
+
     // Add UI components
     implementation("de.hdodenhof:circleimageview:3.1.0")
     implementation("com.github.bumptech.glide:glide:4.16.0")
     annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
+
+    implementation(libs.firebase.storage)
+    implementation(libs.glide)
 
     // Testing dependencies
     testImplementation(libs.junit)

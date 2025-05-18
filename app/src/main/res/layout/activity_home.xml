@@ -40,21 +40,6 @@
         android:background="#F5F5F5"
         app:layout_constraintBottom_toBottomOf="parent">
 
-        <!-- Force Notification Button -->
-        <Button
-            android:id="@+id/force_button"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:text="Force Chat Notification" />
-
-        <!-- Test Standard Notification Button -->
-        <Button
-            android:id="@+id/test_notification_button"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:text="Test Basic Notification" />
 
     </LinearLayout>
 

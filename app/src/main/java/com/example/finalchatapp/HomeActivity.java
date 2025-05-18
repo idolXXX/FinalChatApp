@@ -34,8 +34,7 @@ public class HomeActivity extends AppCompatActivity {
     private BottomNavigationView bottomNavigationView;
     private Toolbar toolbar;
     private FirebaseAuth mAuth;
-    private Button forceButton;
-    private Button testNotificationButton;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,7 +95,7 @@ public class HomeActivity extends AppCompatActivity {
         requestNotificationPermission();
 
         // Set up the buttons
-        setupButtons();
+//        setupButtons();
 
         // Schedule periodic notification checks
         NotificationService.scheduleNotifications(this);
@@ -107,55 +106,55 @@ public class HomeActivity extends AppCompatActivity {
         Log.d(TAG, "HomeActivity created, notification services initialized");
     }
 
-    private void setupButtons() {
-        // Force Button - Directly shows a chat notification
-        forceButton = findViewById(R.id.force_button);
-        forceButton.setOnClickListener(v -> {
-            FirebaseUser currentUser = mAuth.getCurrentUser();
-            if (currentUser == null) return;
-
-            String otherUserId = "3VHEXkMqKMgafJo8QAZs994nZ4v2"; // Replace with actual user ID
-            String senderName = "Test User";
-            String messageContent = "This is a direct test message from the Force button!";
-
-            // Show notification directly
-            NotificationService.showDirectNotification(
-                    this,
-                    senderName,
-                    messageContent,
-                    otherUserId
-            );
-
-            Log.d(TAG, "Force notification button pressed");
-            Toast.makeText(this, "Force notification sent", Toast.LENGTH_SHORT).show();
-        });
-
-        // Test Standard Notification Button
-        testNotificationButton = findViewById(R.id.test_notification_button);
-        testNotificationButton.setOnClickListener(v -> {
-            // Show a simple test notification
-            NotificationCompat.Builder builder = new NotificationCompat.Builder(this, NotificationService.CHANNEL_ID)
-                    .setSmallIcon(R.drawable.ic_chat)
-                    .setContentTitle("Test Notification")
-                    .setContentText("This is a standard test notification")
-                    .setPriority(NotificationCompat.PRIORITY_HIGH)
-                    .setAutoCancel(true)
-                    .setDefaults(NotificationCompat.DEFAULT_ALL);
-
-            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
-            try {
-                notificationManager.notify(9999, builder.build());
-                Toast.makeText(this, "Standard notification sent", Toast.LENGTH_SHORT).show();
-                Log.d(TAG, "Test notification sent");
-            } catch (SecurityException e) {
-                Log.e(TAG, "Permission denied for showing notification", e);
-                Toast.makeText(this, "Permission denied: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-
-                // Try requesting permission again
-                requestNotificationPermission();
-            }
-        });
-    }
+//    private void setupButtons() {
+//        // Force Button - Directly shows a chat notification
+//        forceButton = findViewById(R.id.force_button);
+//        forceButton.setOnClickListener(v -> {
+//            FirebaseUser currentUser = mAuth.getCurrentUser();
+//            if (currentUser == null) return;
+//
+//            String otherUserId = "3VHEXkMqKMgafJo8QAZs994nZ4v2"; // Replace with actual user ID
+//            String senderName = "Test User";
+//            String messageContent = "This is a direct test message from the Force button!";
+//
+//            // Show notification directly
+//            NotificationService.showDirectNotification(
+//                    this,
+//                    senderName,
+//                    messageContent,
+//                    otherUserId
+//            );
+//
+//            Log.d(TAG, "Force notification button pressed");
+//            Toast.makeText(this, "Force notification sent", Toast.LENGTH_SHORT).show();
+//        });
+//
+//        // Test Standard Notification Button
+//        testNotificationButton = findViewById(R.id.test_notification_button);
+//        testNotificationButton.setOnClickListener(v -> {
+//            // Show a simple test notification
+//            NotificationCompat.Builder builder = new NotificationCompat.Builder(this, NotificationService.CHANNEL_ID)
+//                    .setSmallIcon(R.drawable.ic_chat)
+//                    .setContentTitle("Test Notification")
+//                    .setContentText("This is a standard test notification")
+//                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+//                    .setAutoCancel(true)
+//                    .setDefaults(NotificationCompat.DEFAULT_ALL);
+//
+//            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+//            try {
+//                notificationManager.notify(9999, builder.build());
+//                Toast.makeText(this, "Standard notification sent", Toast.LENGTH_SHORT).show();
+//                Log.d(TAG, "Test notification sent");
+//            } catch (SecurityException e) {
+//                Log.e(TAG, "Permission denied for showing notification", e);
+//                Toast.makeText(this, "Permission denied: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+//
+//                // Try requesting permission again
+//                requestNotificationPermission();
+//            }
+//        });
+//    }
 
     private void requestNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
