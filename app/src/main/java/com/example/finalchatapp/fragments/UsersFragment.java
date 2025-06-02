@@ -57,7 +57,7 @@ public class UsersFragment extends Fragment {
         errorView = view.findViewById(R.id.error_view);
         progressBar = view.findViewById(R.id.progress_bar);
 
-        // Set up RecyclerView
+        
         userList = new ArrayList<>();
         adapter = new UsersAdapter(getContext(), userList);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -66,7 +66,6 @@ public class UsersFragment extends Fragment {
         // Initial UI state
         showLoading();
 
-        // Load users
         loadUsers();
 
         return view;
@@ -155,7 +154,6 @@ public class UsersFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        // Reload users when fragment becomes visible again
         if (isAdded()) {
             showLoading();
             loadUsers();

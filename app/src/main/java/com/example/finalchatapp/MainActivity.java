@@ -40,7 +40,7 @@ public class MainActivity extends AppCompatActivity {
         requestNotificationPermission();
 
         if (currentUser != null) {
-            // User is already signed in, go to Home Activity
+
             Intent intent = new Intent(this, HomeActivity.class);
             startActivity(intent);
 
@@ -49,16 +49,16 @@ public class MainActivity extends AppCompatActivity {
 
             finish();
         } else {
-            // User is not signed in, show Login Fragment
+
             loadLoginFragment();
         }
         if (getIntent().getBooleanExtra("openChat", false)) {
             String chatUserId = getIntent().getStringExtra("chatUserId");
             if (chatUserId != null && mAuth.getCurrentUser() != null) {
-                // Clear the notification
+
                 NotificationService.clearNotification(this, chatUserId);
 
-                // Open the chat activity
+
                 Intent chatIntent = new Intent(this, ChatActivity.class);
                 chatIntent.putExtra("userId", chatUserId);
                 startActivity(chatIntent);
@@ -105,18 +105,18 @@ public class MainActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
 
-        // Check if user is signed in
+
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser != null) {
-            // User is already signed in, go to Home Activity
+
             startActivity(new Intent(this, HomeActivity.class));
 
-            // Schedule notifications
+
             NotificationService.scheduleNotifications(this);
 
             finish();
         } else {
-            // User is not signed in, show Login Fragment
+
             loadLoginFragment();
         }
     }

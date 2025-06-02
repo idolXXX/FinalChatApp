@@ -21,16 +21,16 @@ public class BootReceiver extends BroadcastReceiver {
                 intent.getAction().equals(Intent.ACTION_BOOT_COMPLETED)) {
             Log.d(TAG, "Boot completed - initializing notification services");
 
-            // Initialize with a small delay to ensure system is fully booted
+
             new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                // Schedule periodic notification checks
+
                 NotificationService.scheduleNotifications(context);
 
-                // Start real-time message listeners
+
                 MessageListener.startMessageListeners(context);
 
                 Log.d(TAG, "Notification services initialized after boot");
-            }, 5000); // 5 second delay
+            }, 5000);
         }
     }
 }

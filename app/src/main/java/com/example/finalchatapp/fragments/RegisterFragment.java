@@ -46,7 +46,7 @@ public class RegisterFragment extends Fragment {
         registerButton = view.findViewById(R.id.register_button);
         loginText = view.findViewById(R.id.login_text);
 
-        // Set click listeners
+
         registerButton.setOnClickListener(v -> registerUser());
         loginText.setOnClickListener(v -> navigateToLogin());
 
@@ -58,7 +58,7 @@ public class RegisterFragment extends Fragment {
         String email = emailInput.getText().toString().trim();
         String password = passwordInput.getText().toString().trim();
 
-        // Validate input
+
         if (TextUtils.isEmpty(username)) {
             usernameInput.setError("Username is required");
             return;
@@ -79,24 +79,20 @@ public class RegisterFragment extends Fragment {
             return;
         }
 
-        // Show progress (you can add a ProgressBar)
+
         registerButton.setEnabled(false);
 
-        // Create user with Firebase Auth
+
         mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        // Get the user ID
                         String userId = mAuth.getCurrentUser().getUid();
-
-                        // Create user object
                         User user = new User(userId, username, email);
 
-                        // Store user data in Firestore
+
                         db.collection("users").document(userId)
                                 .set(user)
                                 .addOnSuccessListener(aVoid -> {
-                                    // Navigate to Home Activity
                                     Intent intent = new Intent(getActivity(), HomeActivity.class);
                                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                                     startActivity(intent);

@@ -34,7 +34,7 @@ public class MessageListener {
     // Use ConcurrentHashMap for thread safety
     private static final Map<String, ListenerRegistration> activeListeners = new ConcurrentHashMap<>();
 
-    // Store IDs of messages we've already processed (thread-safe)
+
     private static final Set<String> processedMessageIds = Collections.synchronizedSet(new HashSet<>());
 
     // Cache user names to avoid frequent Firestore queries (thread-safe)
@@ -49,14 +49,12 @@ public class MessageListener {
     // Flag to track if listeners are already running
     private static boolean isRunning = false;
 
-    /**
-     * Start listening for new messages for the current user
-     */
+
     public static synchronized void startMessageListeners(@NonNull Context context) {
-        // Store context in weak reference to prevent memory leaks
+
         contextRef = new WeakReference<>(context.getApplicationContext());
 
-        // Check if listeners are already running
+
         if (isRunning) {
             Log.d(TAG, "Message listeners already running, skipping initialization");
             return;
@@ -71,20 +69,20 @@ public class MessageListener {
         String currentUserId = currentUser.getUid();
         Log.d(TAG, "Starting message listeners for user: " + currentUserId);
 
-        // Mark as running
+
         isRunning = true;
 
-        // Clean up any stale data
+
         cleanupProcessedMessageIds();
 
-        // First, get all the user's chats
+
         FirebaseFirestore.getInstance()
                 .collection("users")
                 .document(currentUserId)
                 .collection("chats")
                 .get()
                 .addOnSuccessListener(chatSnapshots -> {
-                    // Check again if context is still valid
+
                     Context appContext = contextRef.get();
                     if (appContext == null) {
                         Log.e(TAG, "Context no longer available, canceling setup");
@@ -92,18 +90,18 @@ public class MessageListener {
                         return;
                     }
 
-                    // Setup a listener for each chat
+
                     for (DocumentSnapshot chatDoc : chatSnapshots.getDocuments()) {
                         String otherUserId = chatDoc.getId();
                         setupChatListener(appContext, currentUserId, otherUserId);
                     }
 
-                    // Also listen for new chats
+
                     setupNewChatsListener(appContext, currentUserId);
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Error fetching user's chats: " + e.getMessage());
-                    // Reset running state on failure
+
                     isRunning = false;
                 });
     }
@@ -112,7 +110,7 @@ public class MessageListener {
      * Listen for new chats being created
      */
     private static void setupNewChatsListener(@NonNull Context context, String currentUserId) {
-        // Already have a chat listener?
+
         if (activeListeners.containsKey("new_chats")) {
             Log.d(TAG, "New chats listener already active");
             return;
@@ -120,13 +118,13 @@ public class MessageListener {
 
         Log.d(TAG, "Setting up new chats listener");
 
-        // Listen for changes to the user's chats collection
+
         ListenerRegistration registration = FirebaseFirestore.getInstance()
                 .collection("users")
                 .document(currentUserId)
                 .collection("chats")
                 .addSnapshotListener(MetadataChanges.INCLUDE, (snapshots, e) -> {
-                    // Check if context is still valid
+
                     Context appContext = contextRef.get();
                     if (appContext == null) {
                         Log.e(TAG, "Context no longer available, removing listener");
@@ -142,19 +140,19 @@ public class MessageListener {
 
                     if (snapshots == null) return;
 
-                    // Look for new chats being added
+
                     for (DocumentChange dc : snapshots.getDocumentChanges()) {
                         if (dc.getType() == DocumentChange.Type.ADDED) {
                             String otherUserId = dc.getDocument().getId();
                             Log.d(TAG, "New chat detected with user: " + otherUserId);
 
-                            // Set up a listener for this new chat
+
                             setupChatListener(appContext, currentUserId, otherUserId);
                         }
                     }
                 });
 
-        // Store the registration so we can stop listening later if needed
+
         activeListeners.put("new_chats", registration);
     }
 
@@ -162,10 +160,10 @@ public class MessageListener {
      * Setup a listener for messages in a specific chat
      */
     private static void setupChatListener(@NonNull Context context, String currentUserId, String otherUserId) {
-        // Generate a unique key for this chat listener
+
         String listenerKey = "chat_" + currentUserId + "_" + otherUserId;
 
-        // Check if we already have a listener for this chat
+
         if (activeListeners.containsKey(listenerKey)) {
             Log.d(TAG, "Chat listener already exists for: " + otherUserId);
             return;
@@ -173,7 +171,7 @@ public class MessageListener {
 
         Log.d(TAG, "Setting up message listener for chat with: " + otherUserId);
 
-        // Determine the chat ID using both user IDs
+
         String chatId;
         if (currentUserId.compareTo(otherUserId) < 0) {
             chatId = currentUserId + "_" + otherUserId;
@@ -181,15 +179,15 @@ public class MessageListener {
             chatId = otherUserId + "_" + currentUserId;
         }
 
-        // Create a listener for new messages
+
         ListenerRegistration registration = FirebaseFirestore.getInstance()
                 .collection("chats")
                 .document(chatId)
                 .collection("messages")
                 .orderBy("timestamp", Query.Direction.DESCENDING)
-                .limit(20)  // Only listen to the most recent messages
+                .limit(20)
                 .addSnapshotListener(MetadataChanges.INCLUDE, (snapshots, e) -> {
-                    // Check if context is still valid
+
                     Context appContext = contextRef.get();
                     if (appContext == null) {
                         Log.e(TAG, "Context no longer available, removing listener");
@@ -207,18 +205,17 @@ public class MessageListener {
                         return;
                     }
 
-                    // Process new messages
+
                     for (DocumentChange dc : snapshots.getDocumentChanges()) {
                         if (dc.getType() == DocumentChange.Type.ADDED) {
-                            // Extract message data
+
                             String messageId = dc.getDocument().getId();
 
-                            // Skip if we've already processed this message (thread-safe check)
+
                             synchronized (processedMessageIds) {
                                 if (processedMessageIds.contains(messageId)) {
                                     continue;
-                                }
-                                // Add to processed set
+                                }// Add to processed set
                                 processedMessageIds.add(messageId);
                             }
 
@@ -226,46 +223,46 @@ public class MessageListener {
                             String receiverId = dc.getDocument().getString("receiverId");
                             String content = dc.getDocument().getString("content");
 
-                            // Cleanup processed IDs if growing too large
+
                             cleanupProcessedMessageIds();
 
-                            // Only notify for messages sent TO current user FROM other user
+
                             if (senderId != null && senderId.equals(otherUserId) &&
                                     receiverId != null && receiverId.equals(currentUserId)) {
 
                                 Log.d(TAG, "New message detected from " + otherUserId + ": " + content);
 
-                                // Get username from cache or from Firestore
+
                                 String cachedName = userCache.get(otherUserId);
                                 if (cachedName != null) {
-                                    // Use cached username
+
                                     NotificationService.showDirectNotification(appContext, cachedName, content, otherUserId);
                                 } else {
-                                    // Fetch username from Firestore
+
                                     FirebaseFirestore.getInstance()
                                             .collection("users")
                                             .document(otherUserId)
                                             .get()
                                             .addOnSuccessListener(userDoc -> {
-                                                // Verify context still valid
+
                                                 Context ctx = contextRef.get();
                                                 if (ctx == null) return;
 
                                                 String username = userDoc.getString("username");
                                                 if (username == null) username = "User " + otherUserId.substring(0, Math.min(5, otherUserId.length()));
 
-                                                // Cache username
+
                                                 userCache.put(otherUserId, username);
 
-                                                // Show notification
+
                                                 NotificationService.showDirectNotification(ctx, username, content, otherUserId);
                                             })
                                             .addOnFailureListener(fetchError -> {
-                                                // Verify context still valid
+
                                                 Context ctx = contextRef.get();
                                                 if (ctx == null) return;
 
-                                                // Show notification with generic name
+
                                                 NotificationService.showDirectNotification(ctx, "New message", content, otherUserId);
                                             });
                                 }
@@ -274,7 +271,7 @@ public class MessageListener {
                     }
                 });
 
-        // Store the registration
+
         activeListeners.put(listenerKey, registration);
     }
 

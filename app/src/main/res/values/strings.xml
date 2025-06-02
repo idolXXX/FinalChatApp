@@ -1,8 +1,14 @@
 <resources>
     <string name="app_name">FinalChatApp</string>
-    <string name="start_test_chat">Start Test Chat</string>
     <string name="initialize_database">Initialize Database</string>
     <string name="no_conversations_yet">No conversations yet</string>
-    <string name="test_notification">test notification</string>
-    <string name="test_specific_user">Test Specific User</string>
+    <string name="this_is_a_received_message">This is a received message</string>
+    <string name="this_is_a_sent_message">This is a sent message</string>
+    <string name="_12_45_pm">12:45 PM</string>
+    <string name="don_t_have_an_account_register">Don\'t have an account? Register</string>
+    <string name="login">Login</string>
+    <string name="password">Password</string>
+    <string name="email">Email</string>
+    <string name="chatterbox">Chatterbox</string>
+    <string name="enter_status">Enter status</string>
 </resources>

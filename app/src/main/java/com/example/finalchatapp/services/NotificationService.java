@@ -37,12 +37,12 @@ public class NotificationService extends BroadcastReceiver {
     public static final String CHECK_MESSAGES_ACTION = "com.example.finalchatapp.CHECK_MESSAGES";
     public static final int NOTIFICATION_REQUEST_CODE = 42;
 
-    // Set to track message IDs that have already been processed
+
     private static final Set<String> processedMessageIds = new HashSet<>();
     private static long lastCheckTime = 0;
-    // Flag to track if this is the first check after startup
+
     private static boolean isFirstCheck = true;
-    // Stores users we've already fetched usernames for
+
     private static final Map<String, String> userCache = new HashMap<>();
 
     @Override
@@ -50,7 +50,7 @@ public class NotificationService extends BroadcastReceiver {
         Log.d(TAG, "NotificationService receiver triggered with action: " +
                 (intent.getAction() != null ? intent.getAction() : "null"));
 
-        // Use a wake lock to ensure the device doesn't sleep during processing
+
         PowerManager powerManager = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
         PowerManager.WakeLock wakeLock = powerManager.newWakeLock(
                 PowerManager.PARTIAL_WAKE_LOCK,
@@ -61,7 +61,7 @@ public class NotificationService extends BroadcastReceiver {
 
             checkForNewMessages(context);
 
-            // Reschedule for next check
+
             scheduleNextAlarm(context);
 
         } catch (Exception e) {
@@ -73,7 +73,7 @@ public class NotificationService extends BroadcastReceiver {
         }
     }
 
-    // Schedule the next alarm immediately
+
     private void scheduleNextAlarm(Context context) {
         Log.d(TAG, "Scheduling next notification check");
 
@@ -81,14 +81,14 @@ public class NotificationService extends BroadcastReceiver {
         Intent intent = new Intent(context, NotificationService.class);
         intent.setAction(CHECK_MESSAGES_ACTION);
 
-        // Create a PendingIntent that won't be updated
+
         int flags = PendingIntent.FLAG_UPDATE_CURRENT;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             flags |= PendingIntent.FLAG_IMMUTABLE;
         }
         PendingIntent pendingIntent = PendingIntent.getBroadcast(context, NOTIFICATION_REQUEST_CODE, intent, flags);
 
-        // Set the next alarm
+
         if (alarmManager != null) {
             long triggerTime = System.currentTimeMillis() + (30 * 1000); // 30 seconds
 
@@ -102,7 +102,7 @@ public class NotificationService extends BroadcastReceiver {
                     );
                     Log.d(TAG, "Next notification check scheduled with setExactAndAllowWhileIdle for " + new Date(triggerTime));
                 } else {
-                    // Fall back to inexact alarm
+
                     alarmManager.set(
                             AlarmManager.RTC_WAKEUP,
                             triggerTime,
@@ -120,7 +120,7 @@ public class NotificationService extends BroadcastReceiver {
                 );
                 Log.d(TAG, "Next notification check scheduled with setExactAndAllowWhileIdle for " + new Date(triggerTime));
             } else {
-                // For older Android versions
+
                 alarmManager.set(
                         AlarmManager.RTC_WAKEUP,
                         triggerTime,
@@ -131,7 +131,7 @@ public class NotificationService extends BroadcastReceiver {
         }
     }
 
-    // Schedule initial notification checks
+
     public static void scheduleNotifications(Context context) {
         Log.d(TAG, "Starting initial notification schedule");
 
@@ -139,21 +139,21 @@ public class NotificationService extends BroadcastReceiver {
         Intent intent = new Intent(context, NotificationService.class);
         intent.setAction(CHECK_MESSAGES_ACTION);
 
-        // Create a PendingIntent that won't be updated
+
         int flags = PendingIntent.FLAG_UPDATE_CURRENT;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             flags |= PendingIntent.FLAG_IMMUTABLE;
         }
         PendingIntent pendingIntent = PendingIntent.getBroadcast(context, NOTIFICATION_REQUEST_CODE, intent, flags);
 
-        // Cancel any existing alarms
+
         if (alarmManager != null) {
             alarmManager.cancel(pendingIntent);
 
-            // Schedule the first check in 5 seconds
+
             long triggerTime = System.currentTimeMillis() + 5000;
 
-            // For Android 12+ (S and later)
+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 if (alarmManager.canScheduleExactAlarms()) {
                     alarmManager.setExactAndAllowWhileIdle(
@@ -163,7 +163,7 @@ public class NotificationService extends BroadcastReceiver {
                     );
                     Log.d(TAG, "Initial notification check scheduled with setExactAndAllowWhileIdle for " + new Date(triggerTime));
                 } else {
-                    // Fall back to inexact alarm
+
                     alarmManager.set(
                             AlarmManager.RTC_WAKEUP,
                             triggerTime,
@@ -181,7 +181,7 @@ public class NotificationService extends BroadcastReceiver {
                 );
                 Log.d(TAG, "Initial notification check scheduled with setExactAndAllowWhileIdle for " + new Date(triggerTime));
             } else {
-                // For older Android versions
+
                 alarmManager.set(
                         AlarmManager.RTC_WAKEUP,
                         triggerTime,
@@ -190,14 +190,14 @@ public class NotificationService extends BroadcastReceiver {
                 Log.d(TAG, "Initial notification check scheduled with set for " + new Date(triggerTime));
             }
 
-            // Create notification channel right away
+
             createNotificationChannel(context);
 
             Log.d(TAG, "Initial notification checks scheduled successfully");
         }
     }
 
-    // Create notification channel (can be called multiple times safely)
+
     public static void createNotificationChannel(Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(
@@ -217,9 +217,9 @@ public class NotificationService extends BroadcastReceiver {
         }
     }
 
-    // Check for new messages
+
     private void checkForNewMessages(Context context) {
-        // Cleanup the processed message IDs if needed
+
         cleanupProcessedMessages();
 
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
@@ -228,22 +228,21 @@ public class NotificationService extends BroadcastReceiver {
             return;
         }
 
-        // If this is the first check after startup, don't show notifications
-        // Just mark all current messages as processed
+
         if (isFirstCheck) {
             Log.d(TAG, "First check after startup - recording existing messages but not showing notifications");
             isFirstCheck = false;
-            // Record existing messages but don't notify
+
             checkAllMessagesWithoutNotifying(context, currentUser.getUid());
             return;
         }
 
         Log.d(TAG, "Checking for new messages for user: " + currentUser.getUid());
 
-        // Use a longer window for finding new messages (15 minutes)
+
         final long checkFromTime = System.currentTimeMillis() - (15 * 60 * 1000);
 
-        // Check for new messages in each chat
+
         FirebaseFirestore.getInstance()
                 .collection("users")
                 .document(currentUser.getUid())
@@ -261,7 +260,7 @@ public class NotificationService extends BroadcastReceiver {
                         String otherUserId = chatDoc.getId();
                         Log.d(TAG, "Checking messages from user: " + otherUserId);
 
-                        // Check for messages from this user
+
                         checkChatMessages(context, otherUserId, currentUser.getUid(), checkFromTime);
                     }
                 })
@@ -270,9 +269,9 @@ public class NotificationService extends BroadcastReceiver {
                 });
     }
 
-    // Add this method to record existing messages without showing notifications
+
     private void checkAllMessagesWithoutNotifying(Context context, String currentUserId) {
-        // Get all the user's chats
+
         FirebaseFirestore.getInstance()
                 .collection("users")
                 .document(currentUserId)
@@ -284,15 +283,15 @@ public class NotificationService extends BroadcastReceiver {
                     for (QueryDocumentSnapshot chatDoc : chatSnapshots) {
                         String otherUserId = chatDoc.getId();
 
-                        // Check both possible chat locations and just record the message IDs
+
                         recordExistingMessages(otherUserId, currentUserId);
                     }
                 });
     }
 
-    // Record existing message IDs so they won't trigger notifications
+
     private void recordExistingMessages(String otherUserId, String currentUserId) {
-        // Combined ID approach
+
         String chatId;
         if (currentUserId.compareTo(otherUserId) < 0) {
             chatId = currentUserId + "_" + otherUserId;
@@ -300,7 +299,7 @@ public class NotificationService extends BroadcastReceiver {
             chatId = otherUserId + "_" + currentUserId;
         }
 
-        // Check with combined ID
+
         FirebaseFirestore.getInstance()
                 .collection("chats")
                 .document(chatId)
@@ -314,17 +313,17 @@ public class NotificationService extends BroadcastReceiver {
                 });
     }
 
-    // Check messages in a specific chat
+
     private void checkChatMessages(Context context, String otherUserId, String currentUserId, long checkFromTime) {
-        // Use a more precise timestamp: last check time or provided checkFromTime, whichever is more recent
+
         long effectiveCheckTime = Math.max(lastCheckTime, checkFromTime);
 
-        // Update the last check time for the next run
+
         lastCheckTime = System.currentTimeMillis();
 
         Log.d(TAG, "Checking for messages newer than: " + new Date(effectiveCheckTime));
 
-        // Create a chat ID using both user IDs
+
         String chatId;
         if (currentUserId.compareTo(otherUserId) < 0) {
             chatId = currentUserId + "_" + otherUserId;
@@ -332,7 +331,7 @@ public class NotificationService extends BroadcastReceiver {
             chatId = otherUserId + "_" + currentUserId;
         }
 
-        // Check for messages using the combined chat ID
+
         FirebaseFirestore.getInstance()
                 .collection("chats")
                 .document(chatId)
@@ -347,13 +346,13 @@ public class NotificationService extends BroadcastReceiver {
                 });
     }
 
-    // Helper method to process messages from any location
+
     private void processMessages(Context context, QuerySnapshot messages,
                                  String otherUserId, String currentUserId, long checkFromTime) {
-        // Skip if no messages
+
         if (messages.isEmpty()) return;
 
-        // Find messages that qualify for notification
+
         List<QueryDocumentSnapshot> relevantMessages = new ArrayList<>();
 
         for (QueryDocumentSnapshot msgDoc : messages) {
@@ -363,12 +362,12 @@ public class NotificationService extends BroadcastReceiver {
             Long timestamp = msgDoc.getLong("timestamp");
             String content = msgDoc.getString("content");
 
-            // Skip messages we've already processed
+
             if (processedMessageIds.contains(messageId)) {
                 continue;
             }
 
-            // If this message is FROM the other user TO the current user and is recent
+
             if (senderId != null && senderId.equals(otherUserId) &&
                     receiverId != null && receiverId.equals(currentUserId) &&
                     timestamp != null && timestamp > checkFromTime) {
@@ -376,25 +375,24 @@ public class NotificationService extends BroadcastReceiver {
                 Log.d(TAG, "New message qualifies for notification: " + content);
                 relevantMessages.add(msgDoc);
 
-                // Add to processed set so we don't show it again
+
                 processedMessageIds.add(messageId);
             }
         }
 
-        // If we found new messages that qualify
+
         if (!relevantMessages.isEmpty()) {
-            // Get the latest message
+
             QueryDocumentSnapshot latestMsg = relevantMessages.get(relevantMessages.size() - 1);
             String content = latestMsg.getString("content");
 
-            // Check if we already have the username cached
             if (userCache.containsKey(otherUserId)) {
                 String username = userCache.get(otherUserId);
                 showNotification(context, username, content, otherUserId);
                 return;
             }
 
-            // Get the sender's username to show in the notification
+
             FirebaseFirestore.getInstance()
                     .collection("users")
                     .document(otherUserId)
@@ -403,16 +401,16 @@ public class NotificationService extends BroadcastReceiver {
                         String username = userDoc.getString("username");
                         if (username == null) username = "User " + otherUserId.substring(0, 5);
 
-                        // Cache the username for future use
+
                         userCache.put(otherUserId, username);
 
                         Log.d(TAG, "Showing notification from " + username + ": " + content);
 
-                        // Show the notification
+
                         showNotification(context, username, content, otherUserId);
                     })
                     .addOnFailureListener(e -> {
-                        // If we can't get the username, still show the notification
+
                         Log.e(TAG, "Error getting username: " + e.getMessage());
                         showNotification(context, "New message", content, otherUserId);
                     });
@@ -421,26 +419,26 @@ public class NotificationService extends BroadcastReceiver {
         }
     }
 
-    // Add this to your NotificationService class
+
     private void cleanupProcessedMessages() {
-        // If we have too many processed messages, clear out older ones
+
         if (processedMessageIds.size() > 1000) {
             Log.d(TAG, "Cleaning up processed message IDs cache");
             processedMessageIds.clear();
         }
     }
 
-    // Show a notification for a message
+
     private static void showNotification(Context context, String sender, String messageContent, String senderId) {
         Log.d(TAG, "Showing notification from " + sender + ": " + messageContent);
 
-        // Create an intent for when notification is tapped
+
         Intent intent = new Intent(context, MainActivity.class);
         intent.putExtra("openChat", true);
         intent.putExtra("chatUserId", senderId);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 
-        // Create PendingIntent
+
         int flags = PendingIntent.FLAG_UPDATE_CURRENT;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             flags |= PendingIntent.FLAG_IMMUTABLE;
@@ -452,7 +450,7 @@ public class NotificationService extends BroadcastReceiver {
                 flags
         );
 
-        // Build the notification
+
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_chat)
                 .setContentTitle(sender)
@@ -462,7 +460,7 @@ public class NotificationService extends BroadcastReceiver {
                 .setAutoCancel(true)
                 .setDefaults(NotificationCompat.DEFAULT_ALL);
 
-        // Show the notification
+
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
         try {
             notificationManager.notify(senderId.hashCode(), builder.build());
@@ -472,16 +470,16 @@ public class NotificationService extends BroadcastReceiver {
         }
     }
 
-    // Utility method to directly show a chat notification from outside
+
     public static void showDirectNotification(Context context, String sender, String message, String senderId) {
-        // Create notification channel if needed
+
         createNotificationChannel(context);
 
-        // Show the notification
+
         showNotification(context, sender, message, senderId);
     }
 
-    // Clear a notification for a specific chat
+
     public static void clearNotification(Context context, String senderId) {
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
         notificationManager.cancel(senderId.hashCode());

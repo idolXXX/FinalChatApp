@@ -41,7 +41,7 @@ public class LoginFragment extends Fragment {
         loginButton = view.findViewById(R.id.login_button);
         registerText = view.findViewById(R.id.register_text);
 
-        // Set click listeners
+
         loginButton.setOnClickListener(v -> loginUser());
         registerText.setOnClickListener(v -> navigateToRegister());
 
@@ -52,7 +52,7 @@ public class LoginFragment extends Fragment {
         String email = emailInput.getText().toString().trim();
         String password = passwordInput.getText().toString().trim();
 
-        // Validate input
+
         if (TextUtils.isEmpty(email)) {
             emailInput.setError("Email is required");
             return;
@@ -63,20 +63,20 @@ public class LoginFragment extends Fragment {
             return;
         }
 
-        // Show progress (you can add a ProgressBar)
+
         loginButton.setEnabled(false);
 
-        // Sign in with Firebase
+
         mAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(task -> {
                     loginButton.setEnabled(true);
                     if (task.isSuccessful()) {
-                        // Navigate to Home Activity
+
                         Intent intent = new Intent(getActivity(), HomeActivity.class);
                         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                         startActivity(intent);
                     } else {
-                        // Display error message
+
                         Toast.makeText(getContext(), "Authentication failed: " + task.getException().getMessage(),
                                 Toast.LENGTH_SHORT).show();
                     }

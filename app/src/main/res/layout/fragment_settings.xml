@@ -64,7 +64,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:background="@drawable/edit_text_background"
-        android:hint="Enter status"
+        android:hint="@string/enter_status"
         android:padding="12dp"
         app:layout_constraintTop_toBottomOf="@+id/status_label" />
 

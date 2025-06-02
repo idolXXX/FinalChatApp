@@ -32,6 +32,21 @@
                 android:scaleType="fitCenter"
                 android:contentDescription="Sent image" />
 
+            <HorizontalScrollView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:scrollbars="none">
+
+                <LinearLayout
+                    android:id="@+id/reactions_container"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:visibility="gone" />
+
+            </HorizontalScrollView>
+
             <TextView
                 android:id="@+id/time_text"
                 android:layout_width="wrap_content"
@@ -43,6 +58,7 @@
                 android:text="00:00"
                 android:textColor="#FFFFFF"
                 android:textSize="10sp" />
+
 
         </LinearLayout>
 

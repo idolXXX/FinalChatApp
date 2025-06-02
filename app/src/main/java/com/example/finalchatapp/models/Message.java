@@ -1,25 +1,32 @@
 package com.example.finalchatapp.models;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 public class Message {
     private String messageId;
     private String senderId;
     private String receiverId;
     private String content;
-    private String imageUrl; // New field for image URL
-    private int type; // Message type: 0=text, 1=image
+    private String imageUrl;
+    private int type;
     private long timestamp;
     private boolean seen;
+    private Map<String, List<String>> reactions;
 
-    // Constants for message types
+
     public static final int TYPE_TEXT = 0;
     public static final int TYPE_IMAGE = 1;
 
-    // Empty constructor for Firestore
+
     public Message() {
-        this.type = TYPE_TEXT; // Default to text message
+        this.type = TYPE_TEXT;
+        this.reactions = new HashMap<>();
     }
 
-    // Constructor for text messages (your existing constructor)
+
     public Message(String messageId, String senderId, String receiverId, String content) {
         this.messageId = messageId;
         this.senderId = senderId;
@@ -28,9 +35,10 @@ public class Message {
         this.timestamp = System.currentTimeMillis();
         this.seen = false;
         this.type = TYPE_TEXT;
+        this.reactions = new HashMap<>();
     }
 
-    // New constructor for image messages
+
     public Message(String messageId, String senderId, String receiverId, String imageUrl, int type) {
         this.messageId = messageId;
         this.senderId = senderId;
@@ -39,9 +47,10 @@ public class Message {
         this.type = type;
         this.timestamp = System.currentTimeMillis();
         this.seen = false;
+        this.reactions = new HashMap<>();
     }
 
-    // Your existing getters and setters
+
     public String getMessageId() {
         return messageId;
     }
@@ -90,7 +99,7 @@ public class Message {
         this.seen = seen;
     }
 
-    // New getters and setters for image support
+
     public String getImageUrl() {
         return imageUrl;
     }
@@ -105,5 +114,54 @@ public class Message {
 
     public void setType(int type) {
         this.type = type;
+    }
+    // Reactions methods
+    public Map<String, List<String>> getReactions() {
+        return reactions != null ? reactions : new HashMap<>();
+    }
+
+    public void setReactions(Map<String, List<String>> reactions) {
+        this.reactions = reactions;
+    }
+
+    public void addReaction(String emoji, String userId) {
+        if (reactions == null) {
+            reactions = new HashMap<>();
+        }
+
+        if (!reactions.containsKey(emoji)) {
+            reactions.put(emoji, new ArrayList<>());
+        }
+
+        if (!reactions.get(emoji).contains(userId)) {
+            reactions.get(emoji).add(userId);
+        }
+    }
+
+    public void removeReaction(String emoji, String userId) {
+        if (reactions != null && reactions.containsKey(emoji)) {
+            reactions.get(emoji).remove(userId);
+
+
+            if (reactions.get(emoji).isEmpty()) {
+                reactions.remove(emoji);
+            }
+        }
+    }
+
+    public boolean hasUserReacted(String emoji, String userId) {
+        return reactions != null &&
+                reactions.containsKey(emoji) &&
+                reactions.get(emoji).contains(userId);
+    }
+
+    public int getTotalReactionCount() {
+        int count = 0;
+        if (reactions != null) {
+            for (List<String> users : reactions.values()) {
+                count += users.size();
+            }
+        }
+        return count;
     }
 }

@@ -10,6 +10,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.finalchatapp.ChatActivity;
 import com.example.finalchatapp.R;
 import com.example.finalchatapp.models.ChatPreview;
@@ -42,27 +43,37 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
         return new ViewHolder(view);
     }
 
+
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         ChatPreview chatPreview = chatPreviews.get(position);
 
-        // Load other user info
+
         db.collection("users").document(chatPreview.getUserId())
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
                     User user = documentSnapshot.toObject(User.class);
                     if (user != null) {
                         holder.usernameText.setText(user.getUsername());
-                        // Load profile image with Glide if available
-                        // For now, we'll use the default profile image
+
+
+                        if (user.getProfileImageUrl() != null && !user.getProfileImageUrl().isEmpty()) {
+                            Glide.with(context)
+                                    .load(user.getProfileImageUrl())
+                                    .placeholder(R.drawable.default_profile)
+                                    .error(R.drawable.default_profile)
+                                    .into(holder.profileImage);
+                        } else {
+                            holder.profileImage.setImageResource(R.drawable.default_profile);
+                        }
                     }
                 });
 
-        // Set last message and time
+
         holder.lastMessageText.setText(chatPreview.getLastMessageContent());
         holder.timeText.setText(formatTime(chatPreview.getLastMessageTimestamp()));
 
-        // Set click listener
+
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(context, ChatActivity.class);
             intent.putExtra("userId", chatPreview.getUserId());

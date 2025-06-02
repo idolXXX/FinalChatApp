@@ -32,6 +32,7 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
 import com.example.finalchatapp.adapters.MessageAdapter;
 import com.example.finalchatapp.models.Message;
 import com.example.finalchatapp.models.User;
@@ -115,8 +116,6 @@ public class ChatActivity extends AppCompatActivity {
         storageReference = storage.getReference();
         currentUser = mAuth.getCurrentUser();
 
-
-
         if (currentUser == null) {
             finish();
             return;
@@ -156,6 +155,8 @@ public class ChatActivity extends AppCompatActivity {
 
         // Set chat ID (a unique ID for this conversation)
         setChatId();
+
+        messageAdapter.setChatId(chatId);
 
         // Load messages
         loadMessages();
@@ -208,7 +209,18 @@ public class ChatActivity extends AppCompatActivity {
                         if (otherUser != null) {
                             Log.d(TAG, "Successfully loaded user: " + otherUser.getUsername());
                             usernameText.setText(otherUser.getUsername());
-                            // You can load profile image using Glide here if user has a profile image
+
+                            // Load profile image using Glide
+                            if (otherUser.getProfileImageUrl() != null && !otherUser.getProfileImageUrl().isEmpty()) {
+                                Glide.with(this)
+                                        .load(otherUser.getProfileImageUrl())
+                                        .placeholder(R.drawable.default_profile)
+                                        .error(R.drawable.default_profile)
+                                        .into(profileImage);
+                            } else {
+                                // Use default profile image
+                                profileImage.setImageResource(R.drawable.default_profile);
+                            }
                         } else {
                             Log.e(TAG, "Failed to convert document to User object");
                             Toast.makeText(ChatActivity.this, "Error parsing user data", Toast.LENGTH_SHORT).show();

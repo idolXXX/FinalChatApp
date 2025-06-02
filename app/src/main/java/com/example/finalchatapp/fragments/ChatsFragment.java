@@ -28,7 +28,7 @@ public class ChatsFragment extends Fragment {
 
     private RecyclerView recyclerView;
     private TextView emptyView;
-    private ProgressBar progressBar; // Make sure to add this to your layout
+    private ProgressBar progressBar;
     private ChatsAdapter adapter;
     private List<ChatPreview> chatPreviews;
 
@@ -158,7 +158,7 @@ public class ChatsFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        // Reload chats when fragment becomes visible again
+
         if (isAdded()) {
             showLoading();
             loadChats();

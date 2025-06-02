@@ -1,6 +1,5 @@
 plugins {
     alias(libs.plugins.android.application)
-    // Apply the Google services plugin
     id("com.google.gms.google-services")
 }
 
@@ -31,20 +30,20 @@ android {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
-    // Enable ViewBinding
+
     buildFeatures {
         viewBinding = true
     }
 }
 
 dependencies {
-    // Keep your existing dependencies
+
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
 
-    // Add Firebase dependencies
+    //  Firebase dependencies
     implementation(platform("com.google.firebase:firebase-bom:32.7.4"))
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
@@ -55,13 +54,12 @@ dependencies {
 
     implementation("com.google.android.play:integrity:1.3.0")
 
-    // Image loading with Glide
-    implementation ("com.github.bumptech.glide:glide:4.15.1")
-
-    // Add UI components
+    //  UI components
     implementation("de.hdodenhof:circleimageview:3.1.0")
     implementation("com.github.bumptech.glide:glide:4.16.0")
     annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
+
+    implementation ("com.google.android.material:material:1.12.0")
 
     implementation(libs.firebase.storage)
     implementation(libs.glide)

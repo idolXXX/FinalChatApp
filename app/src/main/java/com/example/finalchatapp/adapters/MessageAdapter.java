@@ -6,19 +6,27 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.finalchatapp.EmojiReactionDialog;
 import com.example.finalchatapp.R;
+import com.example.finalchatapp.EmojiReactionDialog;
 import com.example.finalchatapp.models.Message;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
@@ -32,11 +40,17 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     private Context context;
     private List<Message> messageList;
     private String currentUserId;
+    private String chatId;
 
     public MessageAdapter(Context context, List<Message> messageList, String currentUserId) {
         this.context = context;
         this.messageList = messageList;
         this.currentUserId = currentUserId;
+    }
+
+
+    public void setChatId(String chatId) {
+        this.chatId = chatId;
     }
 
     @NonNull
@@ -69,6 +83,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         try {
             Message message = messageList.get(position);
 
+
             switch (holder.getItemViewType()) {
                 case VIEW_TYPE_SENT:
                     ((SentMessageHolder) holder).bind(message);
@@ -83,6 +98,16 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                     ((ReceivedImageHolder) holder).bind(message);
                     break;
             }
+
+
+            setupReactions(holder, message);
+
+
+            holder.itemView.setOnLongClickListener(v -> {
+                showReactionPicker(message.getMessageId());
+                return true;
+            });
+
         } catch (Exception e) {
             Log.e(TAG, "Error binding message at position " + position, e);
         }
@@ -97,21 +122,23 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     public int getItemViewType(int position) {
         Message message = messageList.get(position);
         if (message.getSenderId().equals(currentUserId)) {
-            // Current user's messages
+
             return message.getType() == Message.TYPE_IMAGE ? VIEW_TYPE_IMAGE_SENT : VIEW_TYPE_SENT;
         } else {
-            // Other user's messages
+
             return message.getType() == Message.TYPE_IMAGE ? VIEW_TYPE_IMAGE_RECEIVED : VIEW_TYPE_RECEIVED;
         }
     }
 
     static class SentMessageHolder extends RecyclerView.ViewHolder {
         TextView messageText, timeText;
+        LinearLayout reactionsContainer;
 
         SentMessageHolder(View itemView) {
             super(itemView);
             messageText = itemView.findViewById(R.id.message_text);
             timeText = itemView.findViewById(R.id.time_text);
+            reactionsContainer = itemView.findViewById(R.id.reactions_container);
         }
 
         void bind(Message message) {
@@ -122,11 +149,13 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     static class ReceivedMessageHolder extends RecyclerView.ViewHolder {
         TextView messageText, timeText;
+        LinearLayout reactionsContainer;
 
         ReceivedMessageHolder(View itemView) {
             super(itemView);
             messageText = itemView.findViewById(R.id.message_text);
             timeText = itemView.findViewById(R.id.time_text);
+            reactionsContainer = itemView.findViewById(R.id.reactions_container);
         }
 
         void bind(Message message) {
@@ -135,19 +164,20 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         }
     }
 
-    // New view holder for sent image messages
     static class SentImageHolder extends RecyclerView.ViewHolder {
         ImageView imageView;
         TextView timeText;
+        LinearLayout reactionsContainer;
 
         SentImageHolder(View itemView) {
             super(itemView);
             imageView = itemView.findViewById(R.id.image_message);
             timeText = itemView.findViewById(R.id.time_text);
+            reactionsContainer = itemView.findViewById(R.id.reactions_container);
         }
 
         void bind(Message message) {
-            // Load image with Glide
+
             Glide.with(itemView.getContext())
                     .load(message.getImageUrl())
                     .placeholder(R.drawable.ic_image_placeholder)
@@ -156,27 +186,28 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
             timeText.setText(formatTime(message.getTimestamp()));
 
-            // Optional: Set click listener for full-screen view
+
             imageView.setOnClickListener(v -> {
-                // You could implement full-screen image viewing here
+
                 Log.d(TAG, "Image clicked: " + message.getImageUrl());
             });
         }
     }
 
-    // New view holder for received image messages
     static class ReceivedImageHolder extends RecyclerView.ViewHolder {
         ImageView imageView;
         TextView timeText;
+        LinearLayout reactionsContainer;
 
         ReceivedImageHolder(View itemView) {
             super(itemView);
             imageView = itemView.findViewById(R.id.image_message);
             timeText = itemView.findViewById(R.id.time_text);
+            reactionsContainer = itemView.findViewById(R.id.reactions_container);
         }
 
         void bind(Message message) {
-            // Load image with Glide
+
             Glide.with(itemView.getContext())
                     .load(message.getImageUrl())
                     .placeholder(R.drawable.ic_image_placeholder)
@@ -185,9 +216,9 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
             timeText.setText(formatTime(message.getTimestamp()));
 
-            // Optional: Set click listener for full-screen view
+
             imageView.setOnClickListener(v -> {
-                // You could implement full-screen image viewing here
+
                 Log.d(TAG, "Image clicked: " + message.getImageUrl());
             });
         }
@@ -196,5 +227,116 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     private static String formatTime(long timestamp) {
         SimpleDateFormat sdf = new SimpleDateFormat("h:mm a", Locale.getDefault());
         return sdf.format(new Date(timestamp));
+    }
+
+
+
+    private void setupReactions(RecyclerView.ViewHolder holder, Message message) {
+        LinearLayout reactionsContainer;
+
+
+        if (holder instanceof SentMessageHolder) {
+            reactionsContainer = ((SentMessageHolder) holder).reactionsContainer;
+        } else if (holder instanceof ReceivedMessageHolder) {
+            reactionsContainer = ((ReceivedMessageHolder) holder).reactionsContainer;
+        } else if (holder instanceof SentImageHolder) {
+            reactionsContainer = ((SentImageHolder) holder).reactionsContainer;
+        } else if (holder instanceof ReceivedImageHolder) {
+            reactionsContainer = ((ReceivedImageHolder) holder).reactionsContainer;
+        } else {
+            return;
+        }
+
+
+        reactionsContainer.removeAllViews();
+
+        Map<String, List<String>> reactions = message.getReactions();
+        if (reactions == null || reactions.isEmpty()) {
+            reactionsContainer.setVisibility(View.GONE);
+            return;
+        }
+
+        reactionsContainer.setVisibility(View.VISIBLE);
+
+
+        for (Map.Entry<String, List<String>> entry : reactions.entrySet()) {
+            String emoji = entry.getKey();
+            int count = entry.getValue().size();
+
+            TextView reactionView = new TextView(context);
+            reactionView.setText(emoji + " " + count);
+            reactionView.setPadding(8, 4, 8, 4);
+            reactionView.setBackground(ContextCompat.getDrawable(context, R.drawable.reaction_background));
+            reactionView.setTextSize(12);
+
+
+            if (message.hasUserReacted(emoji, currentUserId)) {
+                reactionView.setTextColor(ContextCompat.getColor(context, R.color.black));
+            }
+
+
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+            );
+            params.setMargins(0, 0, 8, 0);
+            reactionView.setLayoutParams(params);
+
+
+            reactionView.setOnClickListener(v -> {
+                toggleReaction(message.getMessageId(), emoji);
+            });
+
+            reactionsContainer.addView(reactionView);
+        }
+    }
+
+    private void showReactionPicker(String messageId) {
+        EmojiReactionDialog dialog = EmojiReactionDialog.newInstance(messageId);
+        dialog.setOnEmojiSelectedListener(this::toggleReaction);
+        dialog.show(((AppCompatActivity) context).getSupportFragmentManager(), "EmojiPicker");
+    }
+
+    private void toggleReaction(String messageId, String emoji) {
+        if (chatId == null) {
+            Log.e(TAG, "Chat ID is not set");
+            return;
+        }
+
+        // Find the message
+        for (int i = 0; i < messageList.size(); i++) {
+            Message message = messageList.get(i);
+            if (message.getMessageId().equals(messageId)) {
+
+                if (message.hasUserReacted(emoji, currentUserId)) {
+                    message.removeReaction(emoji, currentUserId);
+                } else {
+                    message.addReaction(emoji, currentUserId);
+                }
+
+
+                notifyItemChanged(i);
+
+
+                updateMessageReactionsInFirestore(messageId, message.getReactions());
+
+                break;
+            }
+        }
+    }
+
+    private void updateMessageReactionsInFirestore(String messageId, Map<String, List<String>> reactions) {
+        FirebaseFirestore.getInstance()
+                .collection("chats")
+                .document(chatId)
+                .collection("messages")
+                .document(messageId)
+                .update("reactions", reactions)
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "Reaction updated successfully");
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Failed to update reaction: " + e.getMessage());
+                });
     }
 }

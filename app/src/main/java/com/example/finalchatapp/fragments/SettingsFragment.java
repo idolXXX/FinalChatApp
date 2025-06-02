@@ -27,7 +27,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
-import com.bumptech.glide.Glide;
+
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -68,10 +68,9 @@ public class SettingsFragment extends Fragment {
         saveButton = view.findViewById(R.id.save_button);
         logoutButton = view.findViewById(R.id.logout_button);
 
-        // Load user info
+
         loadUserInfo();
 
-        // Set click listeners
         changeProfileText.setOnClickListener(v -> openImagePicker());
         saveButton.setOnClickListener(v -> saveUserInfo());
         logoutButton.setOnClickListener(v -> logout());
@@ -90,7 +89,7 @@ public class SettingsFragment extends Fragment {
                         usernameInput.setText(user.getUsername());
                         statusInput.setText(user.getStatus());
 
-                        // Load profile image with Glide if available
+
                         if (user.getProfileImageUrl() != null && !user.getProfileImageUrl().isEmpty()) {
                             Glide.with(this)
                                     .load(user.getProfileImageUrl())
@@ -117,7 +116,7 @@ public class SettingsFragment extends Fragment {
                 && data != null && data.getData() != null) {
             imageUri = data.getData();
 
-            // Display the selected image
+
             profileImage.setImageURI(imageUri);
         }
     }
@@ -128,24 +127,21 @@ public class SettingsFragment extends Fragment {
         String username = usernameInput.getText().toString().trim();
         String status = statusInput.getText().toString().trim();
 
-        // Validate input
+
         if (TextUtils.isEmpty(username)) {
             usernameInput.setError("Username is required");
             return;
         }
-
-        // Disable save button
         saveButton.setEnabled(false);
 
-        // Update user info
+
         if (imageUri != null) {
-            // Upload image first
+
             StorageReference fileRef = storageRef.child("profile_images/" + currentUser.getUid());
             fileRef.putFile(imageUri)
                     .addOnSuccessListener(taskSnapshot -> {
-                        // Get download URL
+
                         fileRef.getDownloadUrl().addOnSuccessListener(uri -> {
-                            // Update user info with image URL
                             updateUserInfo(username, status, uri.toString());
                         });
                     })
@@ -154,7 +150,7 @@ public class SettingsFragment extends Fragment {
                         Toast.makeText(getContext(), "Failed to upload image: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     });
         } else {
-            // Update user info without changing image
+
             updateUserInfo(username, status, null);
         }
     }
@@ -174,7 +170,7 @@ public class SettingsFragment extends Fragment {
                             user.setProfileImageUrl(imageUrl);
                         }
 
-                        // Save updated user
+
                         db.collection("users").document(currentUser.getUid())
                                 .set(user)
                                 .addOnSuccessListener(aVoid -> {

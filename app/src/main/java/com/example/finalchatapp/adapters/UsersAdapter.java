@@ -43,7 +43,7 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.ViewHolder> 
         holder.usernameText.setText(user.getUsername());
         holder.statusText.setText(user.getStatus() != null ? user.getStatus() : "");
 
-        // Load profile image with Glide
+
         if (user.getProfileImageUrl() != null && !user.getProfileImageUrl().isEmpty()) {
             Glide.with(context)
                     .load(user.getProfileImageUrl())
@@ -54,7 +54,7 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.ViewHolder> 
             holder.profileImage.setImageResource(R.drawable.default_profile);
         }
 
-        // Set click listener to open chat
+
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(context, ChatActivity.class);
             intent.putExtra("userId", user.getUserId());

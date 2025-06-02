@@ -8,7 +8,7 @@ public class User {
     private String status;
     private long lastSeen;
 
-    // Empty constructor for Firestore
+
     public User() {}
 
     public User(String userId, String username, String email) {
@@ -16,11 +16,11 @@ public class User {
         this.username = username;
         this.email = email;
         this.profileImageUrl = "";
-        this.status = "Hey, I'm using ChatApp";
+        this.status = "Hey, I'm using Chatterbox";
         this.lastSeen = System.currentTimeMillis();
     }
 
-    // Getters and setters
+
     public String getUserId() {
         return userId;
     }
